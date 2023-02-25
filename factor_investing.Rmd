@@ -3,5 +3,37 @@ title: "Factor Investing with Alternative Data"
 output: html_notebook
 ---
 
+```{r}
+library(tidyverse)
+library(lubridate)
 
+load("data_ml.RData")
 
+data_ml %>%
+  filter(date > "1999-12-31",
+         date < "2019-01-01") %>%
+  arrange(stock_id, date)
+        
+```
+This dataset comprises information on 1,207 stocks listed in the US (possibly originating from Canada or Mexico). The time range starts in November 1998 and ends in March 2019. For each point in time, 93 characteristics describe the firms in the sample.
+
+Our first observation is regarding the size factor, which states that companies with small capitalization tends grant higher returns than large capitalization. For that we create an equally weighted portofolio and summarize the mean return.
+```{r}
+data_ml %>% 
+  group_by(date) %>% 
+  mutate(large = Mkt_Cap_12M_Usd > median(Mkt_Cap_12M_Usd)) %>%  # Creates a Large Cap colum
+  ungroup() %>% 
+  mutate(year = lubridate::year(date)) %>%                       # Creates a year variable
+  group_by(year, large) %>% 
+  summarize(avg_return = mean(R1M_Usd)) %>%                      # Compute the avg return
+  
+  #Plot
+  
+  ggplot(aes(x= year, y= avg_return, fill = large)) +
+  geom_col(position = "dodge") + theme_light() +         
+  theme(legend.position = c(0.8, 0.2)) +
+  coord_fixed(124) + theme(legend.title = element_blank()) +
+  scale_fill_manual(values = c("#F87E1F", "#0570EA"), name = "",
+                    labels = c("Small", "Large"))
+
+```
